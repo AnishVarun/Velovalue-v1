@@ -1,0 +1,4 @@
+for backend{flask & xpressjs }
+frontend{}
+deepsite for frontend
+firebase for backend
