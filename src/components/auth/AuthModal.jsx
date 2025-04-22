@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
@@ -6,8 +6,15 @@ import SignupForm from './SignupForm';
 /**
  * Authentication modal component that toggles between login and signup
  */
-const AuthModal = ({ isOpen, onClose, onLogin, onSignup }) => {
-  const [activeTab, setActiveTab] = useState('login');
+const AuthModal = ({ isOpen, onClose, onLogin, onSignup, initialView = 'login' }) => {
+  const [activeTab, setActiveTab] = useState(initialView);
+
+  // Update activeTab when initialView changes
+  useEffect(() => {
+    if (initialView) {
+      setActiveTab(initialView);
+    }
+  }, [initialView]);
 
   if (!isOpen) return null;
 

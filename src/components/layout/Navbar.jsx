@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { cn } from '../../utils';
-import { Car, Menu, X, User, LogIn } from 'lucide-react';
+import { Car, Bike, Menu, X, User, LogIn, UserPlus } from 'lucide-react';
 import Button from '../ui/Button';
 
 /**
  * Navbar component with responsive mobile menu
  */
-const Navbar = ({ user, onLogin, onLogout }) => {
+const Navbar = ({ user, onLogin, onSignup, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -14,11 +14,12 @@ const Navbar = ({ user, onLogin, onLogout }) => {
   };
 
   const navLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Price Calculator', href: '/calculator' },
-    { name: 'Car Models', href: '/models' },
-    { name: 'Community', href: '/community' },
-    { name: 'About', href: '/about' },
+    { name: 'Home', href: '/', icon: null },
+    { name: 'Car Calculator', href: '/car-calculator', icon: <Car className="h-4 w-4 mr-1" /> },
+    { name: 'Bike Calculator', href: '/bike-calculator', icon: <Bike className="h-4 w-4 mr-1" /> },
+    { name: 'Vehicle Models', href: '/models', icon: null },
+    { name: 'Community', href: '/community', icon: null },
+    { name: 'About', href: '/about', icon: null },
   ];
 
   return (
@@ -29,7 +30,7 @@ const Navbar = ({ user, onLogin, onLogout }) => {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Car className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-xl font-bold text-gray-900">Auto Price Pro</span>
+              <span className="ml-2 text-xl font-bold text-gray-900">VelaValue</span>
             </div>
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               {navLinks.map((link) => (
@@ -38,6 +39,7 @@ const Navbar = ({ user, onLogin, onLogout }) => {
                   href={link.href}
                   className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-primary hover:text-primary text-sm font-medium"
                 >
+                  {link.icon && link.icon}
                   {link.name}
                 </a>
               ))}
@@ -48,12 +50,25 @@ const Navbar = ({ user, onLogin, onLogout }) => {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
-                <div className="text-sm font-medium text-gray-700">
-                  Welcome, {user.username}
+                <div className="flex items-center">
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt={user.username}
+                      className="h-8 w-8 rounded-full mr-2"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center mr-2">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="text-sm font-medium text-gray-700">
+                    {user.username}
+                  </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={onLogout}
                   icon={<User className="h-4 w-4" />}
                 >
@@ -61,14 +76,24 @@ const Navbar = ({ user, onLogin, onLogout }) => {
                 </Button>
               </div>
             ) : (
-              <Button 
-                variant="primary" 
-                size="sm" 
-                onClick={onLogin}
-                icon={<LogIn className="h-4 w-4" />}
-              >
-                Login / Sign Up
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onLogin}
+                  icon={<LogIn className="h-4 w-4" />}
+                >
+                  Login
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={onSignup}
+                  icon={<UserPlus className="h-4 w-4" />}
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
           </div>
 
@@ -96,8 +121,9 @@ const Navbar = ({ user, onLogin, onLogout }) => {
             <a
               key={link.name}
               href={link.href}
-              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-primary hover:text-primary"
+              className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-primary hover:text-primary"
             >
+              {link.icon && link.icon}
               {link.name}
             </a>
           ))}
@@ -107,7 +133,17 @@ const Navbar = ({ user, onLogin, onLogout }) => {
           {user ? (
             <div className="flex items-center px-4">
               <div className="flex-shrink-0">
-                <User className="h-10 w-10 rounded-full bg-gray-100 p-2 text-gray-600" />
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.username}
+                    className="h-10 w-10 rounded-full"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-gray-800">{user.username}</div>
@@ -120,14 +156,22 @@ const Navbar = ({ user, onLogin, onLogout }) => {
               </div>
             </div>
           ) : (
-            <div className="px-4">
-              <Button 
-                variant="primary" 
-                className="w-full" 
+            <div className="px-4 space-y-2">
+              <Button
+                variant="outline"
+                className="w-full"
                 onClick={onLogin}
                 icon={<LogIn className="h-4 w-4" />}
               >
-                Login / Sign Up
+                Login
+              </Button>
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={onSignup}
+                icon={<UserPlus className="h-4 w-4" />}
+              >
+                Sign Up
               </Button>
             </div>
           )}

@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
-import { Car, DollarSign, Calendar, Gauge, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Car, DollarSign, Calendar, Gauge, Award, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
-import { formatCurrency } from '../utils';
-import { predictPrice } from '../ml';
+// We'll use both Firebase and our new API
+import { predictCarPrice } from '../config/firebase';
 
 /**
  * PriceCalculator component for predicting car prices
  */
 const PriceCalculator = () => {
+  // Function to format currency in Indian Rupees
+  const formatIndianRupees = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
   const [formData, setFormData] = useState({
     make: '',
     model: '',
@@ -33,7 +41,72 @@ const PriceCalculator = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const [apiStatus, setApiStatus] = useState({
+    isOnline: false,
+    message: 'Checking API status...'
+  });
+
+  // Check if the API is online
+  useEffect(() => {
+    const checkApiStatus = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/health');
+        if (response.ok) {
+          setApiStatus({
+            isOnline: true,
+            message: 'API is online. Using real-time data.'
+          });
+        } else {
+          setApiStatus({
+            isOnline: false,
+            message: 'API is offline. Using fallback data.'
+          });
+        }
+      } catch (error) {
+        setApiStatus({
+          isOnline: false,
+          message: 'API is offline. Using fallback data.'
+        });
+      }
+    };
+
+    checkApiStatus();
+  }, []);
+
+  const fetchPriceFromApi = async (carData) => {
+    try {
+      const url = new URL('http://localhost:5000/api/vehicle-price');
+      url.search = new URLSearchParams({
+        make: carData.make,
+        model: carData.model,
+        year: carData.year,
+        condition: carData.condition,
+        vehicle_type: 'car'
+      }).toString();
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data from API');
+      }
+
+      const data = await response.json();
+      return {
+        estimatedPrice: data.average_price,
+        confidence: data.confidence,
+        marketComparison: data.source === 'web_scraping' ? 'Based on real market data' : 'Estimated',
+        priceRange: {
+          low: data.min_price,
+          high: data.max_price,
+        },
+        currency: data.currency || 'INR'
+      };
+    } catch (error) {
+      console.error('API fetch error:', error);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -49,26 +122,29 @@ const PriceCalculator = () => {
         ...formData,
         year: parseInt(formData.year),
         mileage: parseInt(formData.mileage),
-        id: Date.now(), // Temporary ID for prediction function
-        price: 0, // Placeholder price for prediction function
       };
 
-      // Get prediction
-      setTimeout(() => {
-        const result = predictPrice(carData);
-        setPrediction({
-          estimatedPrice: result,
-          confidence: 0.85,
-          marketComparison: 'Average',
-          priceRange: {
-            low: result * 0.9,
-            high: result * 1.1,
-          },
-        });
-        setIsLoading(false);
-      }, 1500); // Simulate API delay
+      let result;
+
+      // Try to use the API if it's online
+      if (apiStatus.isOnline) {
+        try {
+          result = await fetchPriceFromApi(carData);
+        } catch (apiError) {
+          console.error('API error, falling back to Firebase:', apiError);
+          // Fallback to Firebase if API fails
+          result = await predictCarPrice(carData);
+        }
+      } else {
+        // Use Firebase if API is offline
+        result = await predictCarPrice(carData);
+      }
+
+      setPrediction(result);
     } catch (err) {
-      setError(err.message);
+      console.error('Prediction error:', err);
+      setError(err.message || 'An error occurred while calculating the price');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -100,6 +176,10 @@ const PriceCalculator = () => {
         <p className="text-gray-600">
           Enter your vehicle details below to get an accurate price estimate
         </p>
+        <div className={`mt-2 text-sm flex items-center ${apiStatus.isOnline ? 'text-green-600' : 'text-amber-600'}`}>
+          <AlertCircle className="h-4 w-4 mr-1" />
+          <span>{apiStatus.message}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -235,7 +315,7 @@ const PriceCalculator = () => {
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Estimated Price</p>
                   <p className="text-3xl font-bold text-primary">
-                    {formatCurrency(prediction.estimatedPrice)}
+                    {formatIndianRupees(prediction.estimatedPrice)}
                   </p>
                   <div className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {Math.round(prediction.confidence * 100)}% Confidence
@@ -245,8 +325,8 @@ const PriceCalculator = () => {
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">Price Range</p>
                   <div className="flex justify-between text-sm">
-                    <span>{formatCurrency(prediction.priceRange.low)}</span>
-                    <span>{formatCurrency(prediction.priceRange.high)}</span>
+                    <span>{formatIndianRupees(prediction.priceRange.low)}</span>
+                    <span>{formatIndianRupees(prediction.priceRange.high)}</span>
                   </div>
                   <div className="mt-1 h-2 bg-gray-200 rounded-full">
                     <div className="h-2 bg-primary rounded-full w-1/2"></div>
@@ -257,6 +337,14 @@ const PriceCalculator = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Market Comparison:</span>
                     <span className="font-medium">{prediction.marketComparison}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-gray-600">Data Source:</span>
+                    <span className="font-medium">
+                      {apiStatus.isOnline && prediction.marketComparison.includes('real')
+                        ? 'Web Scraping API'
+                        : 'Firebase Algorithm'}
+                    </span>
                   </div>
                 </div>
               </div>
