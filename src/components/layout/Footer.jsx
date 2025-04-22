@@ -1,5 +1,5 @@
 import React from 'react';
-import { Car, Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import { Car, Bike, Facebook, Twitter, Instagram, Mail, Phone, MapPin, Info, Shield, FileText } from 'lucide-react';
 
 /**
  * Enhanced Footer component with multiple sections and social links
@@ -15,10 +15,10 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center">
               <Car className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-xl font-bold">Auto Price Pro</span>
+              <span className="ml-2 text-xl font-bold">VelaValue</span>
             </div>
             <p className="text-gray-400 text-sm">
-              The most accurate car price prediction platform, helping you make informed decisions about your vehicle purchases.
+              India's most accurate vehicle price prediction platform, helping you make informed decisions about your car and bike purchases.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white">
@@ -42,30 +42,54 @@ const Footer = () => {
               Quick Links
             </h3>
             <ul className="space-y-2">
-              {['Home', 'Price Calculator', 'Car Models', 'Community', 'About Us'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-gray-400 hover:text-white text-sm">
-                    {item}
+              {[
+                { name: 'Home', href: '#' },
+                { name: 'Car Calculator', href: '#' },
+                { name: 'Bike Calculator', href: '#' },
+                { name: 'Vehicle Models', href: '#' },
+                { name: 'Community', href: '#' },
+                { name: 'About Us', href: '#' }
+              ].map((item) => (
+                <li key={item.name}>
+                  <a href={item.href} className="text-gray-400 hover:text-white text-sm">
+                    {item.name}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Car Categories */}
+          {/* Vehicle Categories */}
           <div>
             <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-4">
-              Car Categories
+              Vehicle Categories
             </h3>
-            <ul className="space-y-2">
-              {['Sedans', 'SUVs', 'Trucks', 'Luxury', 'Electric', 'Hybrid'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-gray-400 hover:text-white text-sm">
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <h4 className="text-xs font-medium text-gray-400 mb-2">Cars</h4>
+                <ul className="space-y-2">
+                  {['Hatchbacks', 'Sedans', 'SUVs', 'MUVs', 'Luxury', 'Electric'].map((item) => (
+                    <li key={item}>
+                      <a href="#" className="text-gray-400 hover:text-white text-sm">
+                        {item}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-gray-400 mb-2">Bikes</h4>
+                <ul className="space-y-2">
+                  {['Standard', 'Sports', 'Cruiser', 'Scooter', 'Electric', 'Off-Road'].map((item) => (
+                    <li key={item}>
+                      <a href="#" className="text-gray-400 hover:text-white text-sm">
+                        {item}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Contact Info */}
@@ -77,26 +101,53 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                 <span className="text-gray-400 text-sm">
-                  123 Auto Lane, Car City, CC 12345
+                  IFHE Campus, Hyderabad, Telangana, India
                 </span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">+1 (555) 123-4567</span>
+                <span className="text-gray-400 text-sm">+91 7396947531</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">info@autopricepro.com</span>
+                <span className="text-gray-400 text-sm">anishvarun17@gmail.com</span>
               </li>
             </ul>
+
+            <div className="mt-6 pt-6 border-t border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-4">
+                Legal
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm flex items-center">
+                    <Shield className="h-4 w-4 mr-1" />
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm flex items-center">
+                    <FileText className="h-4 w-4 mr-1" />
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm flex items-center">
+                    <Info className="h-4 w-4 mr-1" />
+                    Disclaimer
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Bottom section with copyright */}
         <div className="mt-12 pt-8 border-t border-gray-800">
-          <p className="text-gray-400 text-sm text-center">
-            &copy; {currentYear} Auto Price Pro. All rights reserved.
-          </p>
+          <div className="text-gray-400 text-sm text-center">
+            <p>&copy; {currentYear} VelaValue. All rights reserved.</p>
+            <p className="mt-2">Special Project by Varun Anish for IFHE</p>
+          </div>
         </div>
       </div>
     </footer>

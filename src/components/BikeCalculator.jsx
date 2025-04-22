@@ -10,6 +10,15 @@ import { formatCurrency } from '../utils';
  * BikeCalculator component for predicting bike prices
  */
 const BikeCalculator = () => {
+  // Function to format currency in USD
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   const [formData, setFormData] = useState({
     make: '',
     model: '',
@@ -83,12 +92,21 @@ const BikeCalculator = () => {
       return {
         estimatedPrice: data.average_price,
         confidence: data.confidence,
-        marketComparison: data.source === 'web_scraping' ? 'Based on real market data' : 'Estimated',
+        marketComparison: data.source === 'fallback_algorithm' ? 'Estimated' : 'Based on real market data',
         priceRange: {
           low: data.min_price,
           high: data.max_price,
         },
-        currency: data.currency || 'INR'
+        currency: 'USD',
+        formattedPrice: formatCurrency(data.average_price),
+        formattedPriceRange: {
+          low: formatCurrency(data.min_price),
+          high: formatCurrency(data.max_price),
+        },
+        specifications: data.specifications || {},
+        geminiInsights: data.gemini_insights || '',
+        sources: data.source || '',
+        sourceUrls: data.source_urls || []
       };
     } catch (error) {
       console.error('API fetch error:', error);
@@ -97,15 +115,15 @@ const BikeCalculator = () => {
   };
 
   const generateFallbackPrice = (bikeData) => {
-    // Base prices by bike type in INR
+    // Base prices by bike type in USD
     const basePricesByType = {
-      'standard': 100000,    // 1 lakh
-      'sports': 150000,      // 1.5 lakhs
-      'cruiser': 180000,     // 1.8 lakhs
-      'touring': 200000,     // 2 lakhs
-      'off-road': 120000,    // 1.2 lakhs
-      'scooter': 80000,      // 80k
-      'electric': 110000,    // 1.1 lakhs
+      'standard': 1200,    // Basic standard bike
+      'sports': 1800,      // Sports bike
+      'cruiser': 2200,     // Cruiser bike
+      'touring': 2500,     // Touring bike
+      'off-road': 1500,    // Off-road bike
+      'scooter': 1000,     // Scooter
+      'electric': 1400,    // Electric bike
     };
 
     // Engine size multipliers
@@ -120,14 +138,14 @@ const BikeCalculator = () => {
 
     // Get base price based on bike type
     const basePrice = basePricesByType[bikeData.bikeType] || 100000;
-    
+
     // Apply engine size multiplier
     const engineMultiplier = engineSizeMultipliers[bikeData.engineSize] || 1.0;
-    
+
     // Adjust for year (bikes depreciate faster than cars)
     const currentYear = new Date().getFullYear();
     const yearFactor = 1 - ((currentYear - bikeData.year) * 0.1);
-    
+
     // Adjust for condition
     const conditionFactors = {
       'excellent': 1.15,
@@ -136,13 +154,13 @@ const BikeCalculator = () => {
       'poor': 0.6,
     };
     const conditionFactor = conditionFactors[bikeData.condition] || 1.0;
-    
+
     // Calculate price
     let price = basePrice * engineMultiplier * Math.max(0.3, yearFactor) * conditionFactor;
-    
+
     // Add some randomness
     price = price * (0.95 + Math.random() * 0.1);
-    
+
     return {
       estimatedPrice: Math.round(price),
       confidence: 0.7,
@@ -151,7 +169,7 @@ const BikeCalculator = () => {
         low: Math.round(price * 0.85),
         high: Math.round(price * 1.15),
       },
-      currency: 'INR'
+      currency: 'USD'
     };
   };
 
@@ -224,14 +242,7 @@ const BikeCalculator = () => {
     { value: 'electric', label: 'Electric' },
   ];
 
-  // Function to format currency in Indian Rupees
-  const formatIndianRupees = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  // Function already defined at the top of the component
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -379,7 +390,7 @@ const BikeCalculator = () => {
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Estimated Price</p>
                   <p className="text-3xl font-bold text-primary">
-                    {formatIndianRupees(prediction.estimatedPrice)}
+                    {prediction.formattedPrice || formatCurrency(prediction.estimatedPrice)}
                   </p>
                   <div className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {Math.round(prediction.confidence * 100)}% Confidence
@@ -389,8 +400,8 @@ const BikeCalculator = () => {
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">Price Range</p>
                   <div className="flex justify-between text-sm">
-                    <span>{formatIndianRupees(prediction.priceRange.low)}</span>
-                    <span>{formatIndianRupees(prediction.priceRange.high)}</span>
+                    <span>{prediction.formattedPriceRange?.low || formatCurrency(prediction.priceRange.low)}</span>
+                    <span>{prediction.formattedPriceRange?.high || formatCurrency(prediction.priceRange.high)}</span>
                   </div>
                   <div className="mt-1 h-2 bg-gray-200 rounded-full">
                     <div className="h-2 bg-primary rounded-full w-1/2"></div>
@@ -405,12 +416,66 @@ const BikeCalculator = () => {
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-gray-600">Data Source:</span>
                     <span className="font-medium">
-                      {apiStatus.isOnline && prediction.marketComparison.includes('real') 
-                        ? 'Web Scraping API' 
-                        : 'Prediction Algorithm'}
+                      {prediction.sources || (apiStatus.isOnline && prediction.marketComparison.includes('real')
+                        ? 'Web Scraping API'
+                        : 'Algorithm')}
                     </span>
                   </div>
                 </div>
+
+                {prediction.specifications && Object.keys(prediction.specifications).length > 0 && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Specifications</p>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {Object.entries(prediction.specifications).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="font-medium">{key}:</span>
+                          <span>{value}</span>
+                        </div>
+                      )).slice(0, 5)}
+                      {Object.keys(prediction.specifications).length > 5 && (
+                        <div className="text-xs text-primary mt-1 cursor-pointer hover:underline">
+                          + {Object.keys(prediction.specifications).length - 5} more specifications
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {prediction.geminiInsights && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Gemini AI Insights</p>
+                    <div className="text-sm text-gray-600 max-h-40 overflow-y-auto pr-2">
+                      {prediction.geminiInsights.split('\n\n').map((paragraph, index) => (
+                        <p key={index} className="mb-2">{paragraph}</p>
+                      )).slice(0, 3)}
+                      {prediction.geminiInsights.split('\n\n').length > 3 && (
+                        <div className="text-xs text-primary mt-1 cursor-pointer hover:underline">
+                          View full insights
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {prediction.sourceUrls && prediction.sourceUrls.length > 0 && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Source Links</p>
+                    <div className="text-sm text-gray-600">
+                      {prediction.sourceUrls.map((url, index) => (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline block truncate"
+                        >
+                          {new URL(url).hostname.replace('www.', '')}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">

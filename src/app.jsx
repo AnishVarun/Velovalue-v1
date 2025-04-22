@@ -3,9 +3,11 @@ import Layout from './components/layout/Layout';
 import PriceCalculator from './components/PriceCalculator';
 import BikeCalculator from './components/BikeCalculator';
 import DiscussionForum from './components/community/DiscussionForum';
+import ContactForm from './components/ContactForm';
 import AuthModal from './components/auth/AuthModal';
+import DisclaimerPopup from './components/DisclaimerPopup';
 import { getCarData } from './config/firebase';
-import { Car, Bike, Calculator, Users } from 'lucide-react';
+import { Car, Bike, Calculator, Users, Mail } from 'lucide-react';
 import './styles.css';
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
         return <BikeCalculator />;
       case 'community':
         return <DiscussionForum user={user} />;
+      case 'contact':
+        return <ContactForm />;
       case 'about':
         return (
           <div className="max-w-4xl mx-auto p-4">
@@ -259,6 +263,17 @@ function App() {
             >
               About
             </button>
+            <button
+              onClick={() => setActiveTab('contact')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                activeTab === 'contact'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Mail className="h-4 w-4 mr-1" />
+              Contact
+            </button>
           </div>
         </div>
       </div>
@@ -281,6 +296,9 @@ function App() {
         onLogin={handleLogin}
         onSignup={handleSignup}
       />
+      
+      {/* Disclaimer Popup */}
+      <DisclaimerPopup />
     </Layout>
   );
 }
